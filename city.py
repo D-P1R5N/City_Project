@@ -21,11 +21,11 @@ class City:
         for row or column based operation
         inside that sector.'''
 
-        for _s in range(3):
+        for _s in range(10):
             #large sectors
             sector = []
 
-            for _m in range(4):
+            for _m in range(10):
                 #inner sectors; "square miles"
                 sq_mile = np.zeros((16,16))
                 sector.append(sq_mile)
@@ -76,8 +76,8 @@ class City:
         the road is oriented [H,V,D]. It should also be determined if a road has
         sub-branching routes or not.'''
 
-        num_roads = len(self.city[0,0])//4
-
+        #num_roads = len(self.city[0,0])//4
+        num_roads = 3
         for _ in range(num_roads):
 
             road_orientation = random.choice([0,1,2])
@@ -219,7 +219,8 @@ class City:
                 if len(open_connections[item]) == self.city.shape[2]:
                     open_connections[item] = random.choices(open_connections[item],k=3)
                 else: pass
-            self.connectDots(k_index,dots=open_connections)
+            returned_points = self.connectDots(k_index,dots=open_connections)
+            print(returned_points)
             open_connections.clear()
 
     def connectDots(self, index, dots=None):
@@ -227,71 +228,73 @@ class City:
         make the necessary modifications based on where the point indictes.
         If the point connects to the bottom, the left or right paths should be
         reversed to get the points closest to the bottom.
-        ***Remember city is size 16, but the max index is 15***'''
+        ***Remember city is size 16, but the max index is 15***
+        It's important to note that each combination needs to be handled in
+        a different way.'''
         import itertools
         combo_keys = [*itertools.combinations(dots.keys(), 2)]
         for c in combo_keys:
             print("Now Checking Area:", index)
             if c == ("U","L"):
-                dots[c[0]] = [(0,i[1]) for i in dots[c[0]]]
-                dots[c[1]] = [(i[0],0) for i in dots[c[1]]]
+                _u = [(0,i[1]) for i in dots[c[0]]]
+                _l = [(i[0],0) for i in dots[c[1]]]
 
-                points = [*zip(dots[c[0]],dots[c[1]])]
+                points = [*zip(_u,_l)]
                 for p in points:
-
                     x , y = self.connectAlign(p)
                     self.city[index][y[1],x[0]:x[1]+1] += 1
                     self.city[index][y[0]:y[1],x[1]] += 1
-
                 print("Connect a Left to Top")
-            elif c == ("U","R"):
-                dots[c[0]] = [(0,i[1]) for i in dots[c[0]]]
-                dots[c[1]] = [(i[0], 15) for i in dots[c[1]]]
 
-                points = [*zip(dots[c[0]],dots[c[1]])]
+            elif c == ("U","R"):
+                _u = [(0,i[1]) for i in dots[c[0]]]
+                _r = [(i[0], 15) for i in dots[c[1]]]
+
+                points = [*zip(_u,_r)]
                 for p in points:
 
                     x , y = self.connectAlign(p)
                     self.city[index][y[1],x[0]:] += 1
                     self.city[index][y[0]:y[1],x[0]] += 1
-
                 print("Connect a Right to Top")
-            elif c == ("U", "D"):
-                dots[c[0]] = [(0,i[1]) for i in dots[c[0]]]
-                dots[c[1]] = [(15, i[1]) for i in dots[c[1]]]
 
-                points = [*zip(dots[c[0]],dots[c[1]])]
+            elif c == ("U", "D"):
+                _u = [(0,i[1]) for i in dots[c[0]]]
+                _d = [(15, i[1]) for i in dots[c[1]]]
+
+                points = [*zip(_u,_d)]
                 for p in points:
 
                     print(p)
                 print("Connect a Top to Bottom")
             elif c == ("D","L"):
-                dots[c[0]] = [(15,i[1]) for i in dots[c[0]]]
-                dots[c[1]] = [(i[0], 0) for i in dots[c[1]]]
+                _d = [(15,i[1]) for i in dots[c[0]]]
+                _l = [(i[0], 0) for i in dots[c[1]]]
 
-                points = [*zip(dots[c[0]],dots[c[1]])]
+                points = [*zip(_d,_l)]
                 for p in points:
-
                     x, y = self.connectAlign(p)
                     self.city[index][y[0]:,x[1]] += 1
                     self.city[index][y[0], x[0]:x[1]+1] += 1
                 print("Connect a Left to Bottom")
+
             elif c == ("D", "R"):
-                dots[c[0]] = [(15,i[1]) for i in dots[c[0]]]
-                dots[c[1]] = [(i[0],15) for i in dots[c[1]]]
+                _d = [(15,i[1]) for i in dots[c[0]]]
+                _r = [(i[0],15) for i in dots[c[1]]]
 
-                points = [*zip(dots[c[0]],dots[c[1]])]
+                points = [*zip(_d,_r)]
                 for p in points:
-
                     x, y = self.connectAlign(p)
                     self.city[index][y[0]:,x[0]] += 1
                     self.city[index][y[0], x[0]:] += 1
                 print("Connect a Right to Bottom")
-            elif c == ("L", "R"):
-                dots[c[0]] = [(i[0], 0) for i in dots[c[0]]]
-                dots[c[1]] = [(i[0], 15) for i in dots[c[1]]]
 
-                points = [*zip(dots[c[0]],dots[c[1]])]
+            elif c == ("L", "R"):
+                _l = [(i[0], 0) for i in dots[c[0]]]
+                _r = [(i[0], 15) for i in dots[c[1]]]
+
+                points = [*zip(_l,_r)]
+
                 for p in points:
                     start, stop = p
                     y = [start[0], stop[0]]
@@ -301,8 +304,6 @@ class City:
                     self.city[index][y[0]:y[1], midway_point] +=1
                     self.city[index][stop[0], midway_point:] +=1
                 print("Connect a Left to Right")
-
-        #print(combo_keys)
 
     def connectAlign(self, tuple_of_points):
 
@@ -329,14 +330,14 @@ class City:
             col = 0
             for _ in _i:
                 ax= axs[row,col]
-                ax.spy(_, markersize=7)
+                ax.spy(_, markersize=5)
                 ax.set_xticks([])
                 ax.set_yticks([])
                 col += 1
             row += 1
         #-preset config for display
         plt.subplots_adjust(wspace=0,hspace=0)
-        plt.subplots_adjust(left=0.22,bottom=0.05,right=0.85,top=0.94)
+        plt.subplots_adjust(left=0.25,bottom=0.01,right=0.75,top=0.95)
         #-auto fullscreen
         mng = plt.get_current_fig_manager()
         mng.window.state('zoomed')
