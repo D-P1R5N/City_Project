@@ -1,3 +1,5 @@
+![Sample Image of City Generated](https://imgur.com/zP7NAg5.png)
+
 # City_Project
 A project with the intention of making randomized city layouts with future hopes of simulated traffic.
 
