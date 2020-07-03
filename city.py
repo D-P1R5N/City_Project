@@ -173,62 +173,146 @@ class City:
         open_connections = {}
         for k_index in self.empty_arrays:
             y,x = k_index
-            print("Now Checking Area:", k_index)
+            #print("Now Checking Area:", k_index)
             #A KeyError signifies that we've reached the edge of the city
             try:
                 val_up = self.validation_dict[(y-1,x)].copy()
                 val_up = [i for i in val_up if i[0] == len(self.city[y,x])-1]
-
+                if val_up:
+                    open_connections["U"] = val_up
+                else: pass
                 #print("Up Index",val)
             except KeyError:
-                val_up = []
                 pass
-
-            if val_up:
-                open_connections["U"] = val_up
-
 
             try:
                 val_dwn = self.validation_dict[(y+1,x)].copy()
                 val_dwn = [i for i in val_dwn if i[0] == 0]
-
+                if val_dwn:
+                    open_connections["D"] = val_dwn
+                else: pass
                 #print("Down Index", val)
             except KeyError:
-                val_dwn = []
                 pass
-
-            if val_dwn:
-                open_connections["D"] = val_dwn
-
 
             try:
                 val_lft = self.validation_dict[(y,x-1)].copy()
                 val_lft = [i for i in val_lft if i[1] == len(self.city[y,x][0])-1]
-
+                if val_lft:
+                    open_connections["L"] = val_lft
+                else: pass
                 #print("Left Index", val)
             except KeyError:
-                val_lft = []
                 pass
-
-            if val_lft:
-                open_connections["L"] = val_lft
 
             try:
                 val_rgt = self.validation_dict[(y,x+1)].copy()
                 val_rgt = [i for i in val_rgt if i[1] ==0]
-
+                if val_rgt:
+                    open_connections["R"] = val_rgt
+                else: pass
                 #print("Right Index", val)
             except KeyError:
-                val_rgt = []
                 pass
-            if val_rgt:
-                open_connections["R"] = val_rgt
 
+            for item in open_connections:
+                if len(open_connections[item]) == self.city.shape[2]:
+                    open_connections[item] = random.choices(open_connections[item],k=3)
+                else: pass
+            self.connectDots(k_index,dots=open_connections)
+            open_connections.clear()
 
-            self.connectDots(open_connections)
+    def connectDots(self, index, dots=None):
+        '''Here we get all possible path combinations, then we
+        make the necessary modifications based on where the point indictes.
+        If the point connects to the bottom, the left or right paths should be
+        reversed to get the points closest to the bottom.
+        ***Remember city is size 16, but the max index is 15***'''
+        import itertools
+        combo_keys = [*itertools.combinations(dots.keys(), 2)]
+        for c in combo_keys:
+            print("Now Checking Area:", index)
+            if c == ("U","L"):
+                dots[c[0]] = [(0,i[1]) for i in dots[c[0]]]
+                dots[c[1]] = [(i[0],0) for i in dots[c[1]]]
 
-    def connectDots(self, dots=None):
-        print(dots)
+                points = [*zip(dots[c[0]],dots[c[1]])]
+                for p in points:
+
+                    x , y = self.connectAlign(p)
+                    self.city[index][y[1],x[0]:x[1]+1] += 1
+                    self.city[index][y[0]:y[1],x[1]] += 1
+
+                print("Connect a Left to Top")
+            elif c == ("U","R"):
+                dots[c[0]] = [(0,i[1]) for i in dots[c[0]]]
+                dots[c[1]] = [(i[0], 15) for i in dots[c[1]]]
+
+                points = [*zip(dots[c[0]],dots[c[1]])]
+                for p in points:
+
+                    x , y = self.connectAlign(p)
+                    self.city[index][y[1],x[0]:] += 1
+                    self.city[index][y[0]:y[1],x[0]] += 1
+
+                print("Connect a Right to Top")
+            elif c == ("U", "D"):
+                dots[c[0]] = [(0,i[1]) for i in dots[c[0]]]
+                dots[c[1]] = [(15, i[1]) for i in dots[c[1]]]
+
+                points = [*zip(dots[c[0]],dots[c[1]])]
+                for p in points:
+
+                    print(p)
+                print("Connect a Top to Bottom")
+            elif c == ("D","L"):
+                dots[c[0]] = [(15,i[1]) for i in dots[c[0]]]
+                dots[c[1]] = [(i[0], 0) for i in dots[c[1]]]
+
+                points = [*zip(dots[c[0]],dots[c[1]])]
+                for p in points:
+
+                    x, y = self.connectAlign(p)
+                    self.city[index][y[0]:,x[1]] += 1
+                    self.city[index][y[0], x[0]:x[1]+1] += 1
+                print("Connect a Left to Bottom")
+            elif c == ("D", "R"):
+                dots[c[0]] = [(15,i[1]) for i in dots[c[0]]]
+                dots[c[1]] = [(i[0],15) for i in dots[c[1]]]
+
+                points = [*zip(dots[c[0]],dots[c[1]])]
+                for p in points:
+
+                    x, y = self.connectAlign(p)
+                    self.city[index][y[0]:,x[0]] += 1
+                    self.city[index][y[0], x[0]:] += 1
+                print("Connect a Right to Bottom")
+            elif c == ("L", "R"):
+                dots[c[0]] = [(i[0], 0) for i in dots[c[0]]]
+                dots[c[1]] = [(i[0], 15) for i in dots[c[1]]]
+
+                points = [*zip(dots[c[0]],dots[c[1]])]
+                for p in points:
+                    start, stop = p
+                    y = [start[0], stop[0]]
+                    y.sort()
+                    midway_point = random.randrange(4,12)
+                    self.city[index][start[0],:midway_point+1] +=1
+                    self.city[index][y[0]:y[1], midway_point] +=1
+                    self.city[index][stop[0], midway_point:] +=1
+                print("Connect a Left to Right")
+
+        #print(combo_keys)
+
+    def connectAlign(self, tuple_of_points):
+
+        y_s,x_s = tuple_of_points[0]
+        y_e,x_e = tuple_of_points[1]
+        x = [x_s, x_e]
+        y = [y_s, y_e]
+        x.sort(), y.sort()
+
+        return x , y
 
     def printcity(self):
         #return print(self.city)
@@ -263,4 +347,3 @@ if __name__ == "__main__":
     city = City()
     city.validateCity()
     city.showcity()
-
